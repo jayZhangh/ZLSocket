@@ -14,6 +14,9 @@ static int const kMaxConnectCount = 5;
 
 @interface ViewController ()
 
+- (IBAction)listenAction:(id)sender;
+@property (weak, nonatomic) IBOutlet UILabel *msgLab;
+
 @end
 
 @implementation ViewController
@@ -21,6 +24,10 @@ static int const kMaxConnectCount = 5;
 - (void)viewDidLoad {
     [super viewDidLoad];
     
+    
+}
+
+- (void)listenSocket {
     // 创建server socket
     int server_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (server_socket == -1) {
@@ -77,7 +84,12 @@ static int const kMaxConnectCount = 5;
         char buf[1024] = {0};
         long iReturn = recv(client_socket, buf, 1024, 0);
         if (iReturn > 0) {
-            NSLog(@"客户端来消息了: %@", [NSString stringWithCString:buf encoding:NSUTF8StringEncoding]);
+            NSString *msg = [NSString stringWithCString:buf encoding:NSUTF8StringEncoding];
+            NSLog(@"客户端来消息了: %@", msg);
+            dispatch_async(dispatch_get_main_queue(), ^{
+                self.msgLab.text = msg;
+            });
+            
             
             [self sendMsg:@"服务端发送d消息." toClient:client_socket];
         } else if (iReturn == -1) {
@@ -97,6 +109,10 @@ static int const kMaxConnectCount = 5;
     const char *p1 = (char *)buf;
     p1 = [msg cStringUsingEncoding:NSUTF8StringEncoding];
     send(client_socket, p1, 1024, 0);
+}
+
+- (IBAction)listenAction:(id)sender {
+    [self listenSocket];
 }
 
 @end
